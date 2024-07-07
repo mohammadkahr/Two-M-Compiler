@@ -1,0 +1,11 @@
+int main(){
+	int three = 3 ;
+	float four = 4.2 ;
+	int sum = three + four;
+	int a;
+
+	int a;
+}
+test {
+a = 2
+}
