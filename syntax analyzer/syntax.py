@@ -6,100 +6,102 @@ from tokenizer import tokenizer
 start_symbol = "Program"
 
 rules = {
-    "Program": [["DeclarationBlock"]],
+  "Program": [["Declist"]],
 
-    "DeclarationBlock": [["SingleDec", "DeclarationExtension"]],
-    "DeclarationExtension": [["SingleDec", "DeclarationExtension"], ["epsilon"]],
+    "Declist": [["Dec", "Declist'"]],
+    "Declist'": [["Dec", "Declist'"], ["epsilon"]],
 
-    "SingleDec": [["DataType", "t_id", "DeclarationType"]],
-    "DeclarationType": [["VariableDeclaration"], ["FunctionDeclaration"]],
+    "Dec": [["Type", "t_id", "Declaration"]],
+    "Declaration": [["Vardec"], ["Funcdec"]],
 
-    "DataType": [["t_int"], ["t_bool"], ["t_char"]],
+    "Type": [["t_int"], ["t_bool"], ["t_char"]],
 
-    "VariableDeclaration": [["VariableList", "t_semicolon"]],
-    "VariableList": [["VariableInitializer", "VariableListExtension"]],
-    "VariableListExtension": [["t_comma", "t_id", "VariableInitializer", "VariableListExtension"], ["epsilon"]],
+    "Vardec": [["Vardeclist", "t_semicolon"]],
+    "Vardeclist": [["VardecInit", "Vardeclist'"]],
+    "Vardeclist'": [["t_comma", "t_id", "VardecInit", "Vardeclist'"], ["epsilon"]],
 
-    "VariableInitializer": [["ArrayDeclaration", "VarInitializerExtension"]],
-    "VarInitializerExtension": [["t_assign", "ExpressionStructure"], ["epsilon"]],
+    "VardecInit": [["Array", "VardecInit'"]],
+    "VardecInit'": [["t_assign", "Expression"], ["epsilon"]],
 
-    "ArrayDeclaration": [["t_lb", "ArrayDimension", "t_rb"], ["epsilon"]],
-    "ArrayDimension": [["ExpressionStructure"], ["epsilon"]],
+    "Array": [["t_lb", "Arraysize", "t_rb"], ["epsilon"]],
+    "Arraysize": [["Expression"], ["epsilon"]],
 
-    "FunctionDeclaration": [["t_lp", "FunctionParameters", "t_rp", "ActionStatement"]],
-    "FunctionParameters": [["ParametersList"], ["epsilon"]],
-    "ParametersList": [["DataType", "t_id", "ParametersExtension"]],
-    "ParametersExtension": [["t_comma", "DataType", "t_id", "ArrayDeclaration", "ParametersExtension"], ["epsilon"]],
+    "Funcdec": [["t_lp", "Parameters", "t_rp", "Statement"]],
+    "Parameters": [["ParameterList"], ["epsilon"]],
+    "ParameterList": [["Type", "t_id", "ParameterList'"]],
+    "ParameterList'": [["t_comma", "Type", "t_id", "Array", "ParameterList'"], ["epsilon"]],
 
-    "ActionStatement": [["CompoundStatement"], ["SimpleAction"], ["ConditionStatement"],
-                        ["IterationStatement"], ["OutputStatement"], ["BreakAction"],
-                        ["ReturnAction"], ["ContinueAction"], ["VariableDeclarationStatement"]
-                       ],
+    "Statement": [["CompoundStmt"], ["SimpleStmt"], ["IfStmt"],
+                  ["LoopStmt"], ["PrintStmt"], ["BreakStmt"],
+                  ["ReturnStmt"], ["ContinueStmt"], ["VardecStmt"]
+                ],
 
-    "CompoundStatement": [["t_lc", "StatementSequence", "t_rc"]],
-    "StatementSequence": [["ActionStatement", "StatementSequence"], ["epsilon"]],
 
-    "ConditionStatement": [["t_if", "ExpressionStructure", "CompoundStatement", "AlternativeStatement"]],
-    "AlternativeStatement": [["t_else", "CompoundStatement"], ["epsilon"]],
+    "CompoundStmt": [["t_lc", "StatementList", "t_rc"]],
+    "StatementList" :[["Statement","StatementList"],["epsilon"]],
 
-    "IterationStatement": [["t_for", "t_lp", "ForInitialization", "t_rp"]],
-    "ForInitialization": [["LoopVarInitialization", "t_semicolon", "LoopExpression", "t_semicolon", "LoopStep"]],
+    "IfStmt": [["t_if","t_lp", "Expression", "t_rp", "CompoundStmt", "ElseStmt"]],
+    "ElseStmt": [["t_else", "CompoundStmt"], ["epsilon"]],
 
-    "LoopVarInitialization": [["DataType", "t_id", "t_assign", "ExpressionStructure"], ["t_id", "t_assign", "ExpressionStructure"], ["epsilon"]],
-    "LoopExpression": [["ExpressionStructure"], ["epsilon"]],
-    "LoopStep": [["SimpleAction2"], ["epsilon"]],
+    "LoopStmt": [["t_for", "t_lp", "ForStmt", "t_rp"]],
+    "ForStmt": [["LoopVardec", "t_semicolon", "LoopExpr", "t_semicolon", "LoopStep"]],
 
-    "SimpleAction": [["t_id", "ArrayAccess", "t_assign", "ExpressionStructure", "t_semicolon"]],
-    "SimpleAction2": [["t_id", "ArrayAccess", "t_assign", "ExpressionStructure"]],
-    "ArrayAccess": [["t_lb", "ArrayDimension2", "t_rb"], ["epsilon"]],
-    "ArrayDimension2": [["ExpressionStructure"]],
+    "LoopVardec": [["Type", "t_id", "t_assign", "Expression"], ["t_id", "t_assign", "Expression"], ["epsilon"]],
+    "LoopExpr": [["Expression"], ["epsilon"]],
+    "LoopStep": [["SimpleStmt2"], ["epsilon"]],
 
-    "VariableDeclarationStatement": [["DataType", "t_id", "VariableList", "t_semicolon"]],
-
-    "ReturnAction": [["t_return", "t_semicolon"], ["t_return", "ExpressionStructure", "t_semicolon"]],
-
-    "BreakAction": [["t_break", "t_semicolon"]],
-
-    "ContinueAction": [["t_continue", "t_semicolon"]],
-
-    "OutputStatement": [["t_print", "t_lp", "OutputRules", "t_rp", "t_semicolon"]],
-    "OutputRules": [["ExpressionStructure", "PrintExtension"]],
-    "PrintExtension": [["t_comma", "ExpressionStructure", "PrintExtension"], ["epsilon"]],
-
-    "ExpressionStructure": [["LogicalExpression"]],
-
-    "LogicalExpression": [["AndExpression", "OrExtension"]],
-    "OrExtension": [["t_lop_or", "AndExpression", "OrExtension"], ["epsilon"]],
-
-    "AndExpression": [["NegationExpression", "AndChain"]],
-    "AndChain": [["t_lop_and", "NegationExpression", "AndChain"], ["epsilon"]],
-
-    "NegationExpression": [["t_lop_not", "NegationExpression"], ["ComparisonExpression"]],
-
-    "ComparisonExpression": [["SimpleExpression", "ComparisonExtension"]],
-    "ComparisonExtension": [["ComparisonOps", "SimpleExpression", "ComparisonExtension"], ["epsilon"]],
-
-    "ComparisonOps": [["t_rop_l"], ["t_rop_g"], ["t_rop_le"], ["t_rop_ge"], ["t_rop_ne"], ["t_rop_e"]],
-
-    "SimpleExpression": [["ArithmeticTerm", "ArithmeticChain1"]],
-    "ArithmeticChain1": [["t_aop_pl", "ArithmeticTerm", "ArithmeticChain1"], ["t_aop_mn", "ArithmeticTerm", "ArithmeticChain1"], ["epsilon"]],
-
-    "ArithmeticTerm": [["ArithmeticFactor", "ArithmeticChain2"]],
-    "ArithmeticChain2": [["t_aop_ml", "ArithmeticFactor", "ArithmeticChain2"], ["t_aop_dv", "ArithmeticFactor", "ArithmeticChain2"], ["t_aop_rm", "ArithmeticFactor", "ArithmeticChain2"], ["epsilon"]],
-
-    "ArithmeticFactor": [["t_aop_pl", "Elementary"], ["t_aop_mn", "Elementary"], ["Elementary"]],
-
-    "Elementary": [["t_id", "FunctionOrArrayAccess"], ["t_decimal"], ["t_hexadecimal"],
-                   ["t_string"], ["t_char"], ["t_true"], ["t_false"],
-                   ["t_lp", "ExpressionStructure", "t_rp"]],
+    "SimpleStmt": [["t_id", "Array2", "SimpleStmt3", "t_semicolon"]],
+    "SimpleStmt2": [["t_id", "Array2", "SimpleStmt3" ]],
+    "SimpleStmt3":[["t_assign", "Expression"],["IsFunction"]],
     
-    "FunctionOrArrayAccess": [["epsilon"], ["t_lp", "DetailedParameters", "t_rp"]],
+    "Array2": [["t_lb", "Arraysize2", "t_rb"], ["epsilon"]],
+    "Arraysize2": [["Expression"]],
 
-    "DetailedParameters": [["ParametersList2"], ["epsilon"]],
+    "VardecStmt": [["Type", "t_id", "Vardeclist", "t_semicolon"]],
 
-    "ParametersList2": [["t_id", "ParametersTail"]],
+    "ReturnStmt": [["t_return", "t_semicolon"], ["t_return", "Expression", "t_semicolon"]],
 
-    "ParametersTail": [["t_comma", "t_id", "ArrayDeclaration", "ParametersTail"], ["epsilon"]]
+    "BreakStmt": [["t_break", "t_semicolon"]],
+
+    "ContinueStmt": [["t_continue", "t_semicolon"]],
+
+    "PrintStmt": [["t_print", "t_lp", "PrintRules", "t_rp", "t_semicolon"]],
+    "PrintRules": [["Expression", "PrintList"]],
+    "PrintList": [["t_comma", "Expression", "PrintList"], ["epsilon"]],
+
+    "Expression": [["OrExp"]],
+
+    "OrExp": [["AndExp", "Or"]],
+    "Or": [["t_lop_or", "AndExp", "Or"], ["epsilon"]],
+
+    "AndExp": [["NotExp", "And"]],
+    "And": [["t_lop_and", "NotExp", "And"], ["epsilon"]],
+
+    "NotExp": [["t_lop_not","NotExp"],["CompExp"]],
+
+    "CompExp": [["Expr", "Comp"]],
+    "Comp": [["Comp_OP", "Expr", "Comp"], ["epsilon"]],
+
+    "Comp_OP": [["t_rop_l"], ["t_rop_g"], ["t_rop_le"], ["t_rop_ge"], ["t_rop_ne"], ["t_rop_e"]],
+
+    "Expr": [["Term", "Arth1"]],
+    "Arth1": [["t_aop_pl", "Term", "Arth1"], ["t_aop_mn", "Term", "Arth1"], ["epsilon"]],
+
+    "Term": [["Factor", "Arth2"]],
+    "Arth2": [["t_aop_ml", "Factor", "Arth2"], ["t_aop_dv", "Factor", "Arth2"], ["t_aop_rm", "Factor", "Arth2"], ["epsilon"]],
+
+    "Factor": [["t_aop_pl", "Atom"], ["t_aop_mn", "Atom"], ["Atom"]],
+
+    "Atom": [["t_id", "IsFunction"], ["t_decimal"], ["t_hexadecimal"],
+             ["t_string"], ["t_char"], ["t_true"], ["t_false"]],
+    
+    "IsFunction": [["epsilon"], ["t_lp", "Parameters2", "t_rp"]],
+
+    "Parameters2" : [["ParameterList2"], ["epsilon"]],
+
+    "ParameterList2": [["Expression", "ParameterList2'"]],
+
+    "ParameterList2'": [["t_comma", "Expression", "Array", "ParameterList2'"], ["epsilon"]]
 }
 
 
@@ -108,7 +110,7 @@ def main():
     print_parsing_table(parsing_table)
 
     tree_root = predictive_parser(parsing_table, start_symbol)
-    print_parse_tree(tree_root)
+    # print_parse_tree(tree_root)
 
 
 def predictive_parser(parsing_table, start_symbol):
@@ -174,15 +176,15 @@ def predictive_parser(parsing_table, start_symbol):
                     stack.pop()
             else:
                 print(f"SYNTAX ERROR!")
-                print("at line #{current_token_line}, Extra: {current_token_name}")
+                print(f"at line {current_token_line}, Extra: {current_token_name}")
                 print("Empty table, token discarded")
                 current_token = next(token_generator)
                 pop_node_stack = False
 
         else:
             stack.pop()
-            print(f"SYNTAX ERROR!")
-            print("at line #{current_token_line}, Extra: {current_token_name}")
+            print("SYNTAX ERROR!")
+            print(f"at line {current_token_line}, Extra: {current_token_name}")
 
     return root
 
